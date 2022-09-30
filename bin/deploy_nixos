@@ -1,0 +1,163 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+# typed: true
+
+require_relative '../lib/terraform'
+
+require 'English'
+require 'optparse'
+require 'pathname'
+require 'json'
+
+DEFAULT_SSH_CONFIG_FILENAME = 'ssh_config'
+DEFAULT_CHANNEL_FILENAME = 'channels.nix'
+DEFAULT_OPTIONS = {
+  ssh_config: DEFAULT_SSH_CONFIG_FILENAME,
+  state: './terraform.tfstate',
+  build_file: "#{__dir__}/../../colmena_deployment.nix",
+  channel_file: DEFAULT_CHANNEL_FILENAME,
+  tags: []
+}.freeze
+
+options = DEFAULT_OPTIONS.dup
+
+OptionParser.new do |opt|
+  opt.on('-t', '--tags TAGS', "Tags to deploy with colmena (serated by ',')") do |o|
+    options[:tags] = o.split(',')
+  end
+
+  opt.on('-s', '--state FILENAME', 'Fullpath to the terraform state file') do |o|
+    options[:state] = DEFAULT_OPTIONS[:state] if o == ''
+
+    options[:state] = File.absolute_path(o)
+  end
+
+  opt.on('-c', '--sshconfig FILENAME', 'Fullpath to the ssh_config file') do |o|
+    options[:ssh_config] = o
+  end
+
+  opt.on('-b', '--buildfile FILENAME', 'Fullpath to the nix build file') do |o|
+    options[:build_file] = File.absolute_path(o)
+  end
+
+  opt.on('-m', '--module PATH', 'Path to the nixos module root') do |o|
+    options[:module_path] = File.absolute_path(o)
+  end
+
+  opt.on('-x', '--channel PATH', 'Path to the channel file to use') do |o|
+    options[:channel_file] = File.absolute_path(o)
+  end
+
+  opt.on('--no-substitutes', 'Do not use substitution when pushing the new configuration') do |_o|
+    options[:no_substitution] = true
+  end
+
+  opt.on('--debug', 'Print debugging information') do |_o|
+    options[:debug] = true
+  end
+
+  opt.on('--show-trace', 'Show trace of nix build') do |_o|
+    options[:show_trace] = true
+  end
+end.parse!
+
+# Some options have to be validated, they cannot contain a bad value
+#
+# Check if the current path contains a file named ssh_config
+if File.exist? options[:ssh_config]
+  # If it does, use it
+  options[:ssh_config] = File.realpath options[:ssh_config]
+else
+  options[:ssh_config] = ''
+  warn 'Warning: no ssh_config file provided'
+end
+
+# Channel file is required, if it's not found we error out
+if File.exist? options[:channel_file]
+  options[:channel_file] = File.realpath("./#{DEFAULT_CHANNEL_FILENAME}")
+else
+  warn 'Required channel file missing'
+  exit 1
+end
+
+puts "Options: #{options}" if options[:debug]
+
+terramethod = Terramethod::Terraform.new(options[:state])
+nixos_hosts = terramethod.nixos_hosts()
+
+puts "Found #{nixos_hosts.length} host#{'s' if nixos_hosts.length > 1}"
+puts 'Selecting the following hosts:'
+nixos_hosts.each do |host|
+  do_print = false
+  do_print = true if options[:tags].empty?
+
+  # Find how many tags intersects with the asked tags
+  ins = host.tags & options[:tags]
+  do_print = true unless ins.empty?
+
+  puts host.to_short_s if do_print
+end
+
+# Parse commands
+if ARGV.empty?
+  options[:goal] = 'apply'
+else
+  case ARGV[0]
+  when 'list'
+    # We already printed the hosts that would be picked, exit
+    exit 0
+  when 'apply'
+    # Default behavior
+    options[:goal] = 'apply'
+  when 'boot'
+    options[:goal] = 'apply'
+  else
+    warn "command '#{ARGV[0]}' does not exist, [list|apply] supported"
+    exit 1
+  end
+end
+
+puts 'Building colmena deployment file...'
+# Check if the deployment file exits
+unless File.exist?(options[:build_file])
+  warn "The nix build file #{options[:build_file]} doesn't exists"
+  exit 1
+end
+
+cmd = <<~NIX_BUILD_CMD
+  nix-build "#{options[:build_file]}" \
+      --no-out-link \
+      --argstr hosts '#{nixos_hosts.to_json}' \
+      --argstr modulePath "#{options[:module_path]}" \
+      --argstr channels "#{options[:channel_file]}"
+NIX_BUILD_CMD
+
+puts "Running nix_build_command: #{cmd}" if options[:debug]
+deployment_file = `#{cmd}`.strip
+if $CHILD_STATUS != 0
+  puts 'Failed to run nix-build'
+  exit 1
+end
+
+puts "Using deployment file #{deployment_file}"
+
+tags_command = ''
+unless options[:tags].empty?
+  colmena_tags = options[:tags].map { |t| "@#{t}" }
+  tags_command = " --on #{colmena_tags.join(',')}"
+end
+
+env = {}
+env['SSH_CONFIG_FILE'] = options[:ssh_config] if File.exist? options[:ssh_config]
+
+colmena_cmd = <<~COLMENA_CMD
+  colmena apply#{' ' + options[:goal] if options[:goal] != 'apply'}#{' --no-substitutes' if options[:no_substitution]} \
+          -f #{deployment_file}#{tags_command}#{' --show-trace' if options[:show_trace]}
+COLMENA_CMD
+
+puts "Colmena command: #{colmena_cmd}" if options[:debug]
+exec(env, colmena_cmd)
+
+# Local Variables:
+# mode: ruby
+# End:
