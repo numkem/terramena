@@ -19,6 +19,9 @@
               mkdir -p $out/lib $out/bin
               cp bin/* $out/bin/
               cp lib/* $out/lib/
+
+              mkdir -p $out/share
+              cp colmena_deployment.nix $out/share/
             '';
           };
         };

@@ -14,7 +14,7 @@ DEFAULT_CHANNEL_FILENAME = 'channels.nix'
 DEFAULT_OPTIONS = {
   ssh_config: DEFAULT_SSH_CONFIG_FILENAME,
   state: './terraform.tfstate',
-  build_file: "#{__dir__}/../../colmena_deployment.nix",
+  build_file: "#{__dir__}/../colmena_deployment.nix",
   channel_file: DEFAULT_CHANNEL_FILENAME,
   tags: []
 }.freeze
