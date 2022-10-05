@@ -121,6 +121,12 @@ module Terramena
       @deployment_file = ''
     end
 
+    def list(terraform_state_path, tags)
+      terraform = Terramena::Terraform.new(terraform_state_path)
+      nixos_hosts = terraform.nixos_hosts(tags)
+      print_hosts(nixos_hosts, false)
+    end
+
     def deploy(goal = 'apply', show_trace: false, no_substitutes: false)
       build_module_root_dir
       colemana_deployment_file
@@ -151,11 +157,22 @@ module Terramena
       Process.wait
     end
 
-    def print_hosts(nixos_hosts)
-      @logger.info "found #{nixos_hosts.length} host#{'s' if nixos_hosts.length > 1}"
-      @logger.info 'selecting the following hosts:'
+    def print_hosts(nixos_hosts, use_logger = true)
+      lines = [
+        "found #{nixos_hosts.length} host#{'s' if nixos_hosts.length > 1}",
+        'selecting the following hosts:'
+      ]
+
       nixos_hosts.each do |host|
-        @logger.info host.to_short_s
+        lines.push host.to_short_s
+      end
+
+      lines.each do |line|
+        if use_logger
+          @logger.info line
+        else
+          puts line
+        end
       end
     end
 

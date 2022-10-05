@@ -98,7 +98,8 @@ if ARGV.empty?
 else
   case ARGV[0]
   when 'list'
-    # We already printed the hosts that would be picked, exit
+    t = Terramena::Colmena.new('', options[:tags], [])
+    t.list(options[:terraform_state_path], options[:tags])
     exit 0
   when 'apply'
     # Default behavior
