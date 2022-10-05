@@ -2,4 +2,5 @@
 
 source 'https://rubygems.org'
 
-gem 'solargraph', '~> 0.47.2', group: :development
+gem "solargraph", "~> 0.47.2", :group => :development
+

@@ -4,6 +4,7 @@ GEM
     ast (2.4.2)
     backport (1.2.0)
     benchmark (0.2.0)
+    dead_end (4.0.0)
     diff-lcs (1.5.0)
     e2mmap (0.1.0)
     jaro_winkler (1.5.4)
@@ -12,6 +13,10 @@ GEM
       rexml
     kramdown-parser-gfm (1.1.0)
       kramdown (~> 2.0)
+    mini_portile2 (2.8.0)
+    nokogiri (1.13.8)
+      mini_portile2 (~> 2.8.0)
+      racc (~> 1.4)
     nokogiri (1.13.8-x86_64-linux)
       racc (~> 1.4)
     parallel (1.22.1)
@@ -51,6 +56,11 @@ GEM
       thor (~> 1.0)
       tilt (~> 2.0)
       yard (~> 0.9, >= 0.9.24)
+    solargraph-dead_end (0.2.0)
+      dead_end
+      solargraph (>= 0.39.1)
+    solargraph_frozen_string_literal (0.1.1)
+      solargraph
     thor (1.2.1)
     tilt (2.0.11)
     unicode-display_width (2.3.0)
@@ -59,10 +69,13 @@ GEM
       webrick (~> 1.7.0)
 
 PLATFORMS
+  ruby
   x86_64-linux
 
 DEPENDENCIES
   solargraph (~> 0.47.2)
+  solargraph-dead_end (~> 0.2.0)
+  solargraph_frozen_string_literal (~> 0.1.1)
 
 BUNDLED WITH
    2.3.7

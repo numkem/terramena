@@ -1,0 +1,8 @@
+include:
+- "bin/**/*"
+- "lib/**/*.rb"
+reporters:
+- rubocop
+- require_not_found
+#- typecheck:strict
+- update_errors

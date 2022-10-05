@@ -1,4 +1,4 @@
-{ hosts, modulePath, channels }:
+{ hosts, channels }:
 
 let
   inherit (import channels) pkgs unstable;

@@ -1,13 +1,14 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-require_relative '../lib/terraform'
+require_relative '../lib/terramena'
 
 require 'optparse'
 
+DEFAULT_SSH_CONFIG_FILENAME = './ssh_config'
 DEFAULT_OPTIONS = {
   state: './terraform.tfstate',
-  ssh_config: './ssh_config',
+  ssh_config: '',
   username: 'root'
 }.freeze
 
@@ -20,13 +21,7 @@ OptionParser.new do |opt|
   end
 
   opt.on('-c', '--sshconfig FILENAME', 'Fullpath to the ssh_config file') do |o|
-    if o == ''
-      ssh_config = File.realpath(DEFAULT_OPTIONS[:ssh_config])
-
-      options[:ssh_config] = ssh_config unless File.exist? ssh_config
-    else
-      options[:ssh_config] = File.realpath(o)
-    end
+    options[:ssh_config] = File.realpath(o)
   end
 
   opt.on('-u', '--user USERNAME', 'Username to use for SSH') do |o|
@@ -50,17 +45,20 @@ end.parse!
 ### Main
 ###
 if ARGV.empty?
-  warn 'a hostname is required as first arugment'
+  warn 'a hostname is required as first argument'
   exit 1
 end
+
+# Parse arguments
+options[:ssh_config] = File.realpath(DEFAULT_SSH_CONFIG_FILENAME) if options[:ssh_config] == ''
 
 hostname = ARGV[0]
 username = options[:username]
 
 username, hostname = hostname.split('@') if hostname.include? '@'
 
-terramethod = Terramethod::Terraform.new(options[:state])
-nixos_hosts = terramethod.nixos_hosts()
+terramena = Terramena::Terraform.new(options[:state])
+nixos_hosts = terramena.nixos_hosts()
 ssh_switches = []
 
 # Check if the hostname matches any hosts in the found nixos_hosts
