@@ -7,13 +7,15 @@
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
+
+        rubyWithGems = pkgs.ruby_3_1.withPackages (ps: with ps; [ slop solargraph ]);
       in
       {
         packages = flake-utils.lib.flattenTree {
           default = pkgs.stdenv.mkDerivation {
             name = "terramena";
             src = self;
-            buildInputs = with pkgs; [ ruby_3_1 ];
+            buildInputs = with pkgs; [ rubyWithGems ];
 
             installPhase = ''
               mkdir -p $out/lib $out/bin $out/share
@@ -26,8 +28,7 @@
 
         devShells.default = pkgs.mkShell {
           buildInputs = with pkgs; [
-            ruby_3_1
-            bundix
+            rubyWithGems
           ];
         };
       });
