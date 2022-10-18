@@ -1,0 +1,47 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require_relative '../lib/commands'
+
+COMMANDS = {
+  'deploy' => {
+    command: Commands::Deploy,
+    help: 'Deploy to NixOS host(s) using Colmena'
+  },
+  'list' => {
+    command: Commands::List,
+    help: 'List all instances reported by Terraform'
+  },
+  'ssh' => {
+    command: Commands::Ssh,
+    help: "Use SSH to connect to an instance by it's hostname"
+  }
+}.freeze
+
+def show_commands
+  COMMANDS.each { |name, c| puts "\t#{name}: #{c[:help]}" }
+end
+
+###
+### Main
+###
+
+# Parse first argument for a command
+if ARGV.empty?
+  warn "A command is required as first argument, available commands are: #{COMMANDS.keys.join(', ')}"
+  show_commands
+  exit 1
+end
+
+begin
+  COMMANDS.fetch(ARGV[0])[:command].new(ARGV).run
+rescue Slop::MissingRequiredOption => e
+  puts e
+  exit 1
+rescue Commands::ExitError
+  exit 0
+end
+
+# Local Variables:
+# mode: ruby
+# End:

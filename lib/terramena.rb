@@ -39,7 +39,7 @@ module Terramena
                @tags
              end
 
-      "Hostname: #{@hostname}, tags: #{tags.join(', ')}, ip: #{@ip}"
+      "Hostname: #{@hostname} \t tags: #{tags.join(', ')} \t ip: #{@ip}"
     end
 
     def to_json(*_args)
@@ -74,7 +74,7 @@ module Terramena
   DEFAULT_COLMENA_DEPLOYMENT_FILEPATH = "#{__dir__}/../share/colmena_deployment.nix".freeze
   DEFAULT_HOST_DIRNAME = 'hosts'
   DEFAULT_SSH_CONFIG_FILENAME = './ssh_config'
-  # Handles interating with Colmena, the NixOS deployment tool.
+  # Handles interacting with Colmena, the NixOS deployment tool.
   #
   # List of available options:
   #   channel_filename: A nix channel file
@@ -98,6 +98,8 @@ module Terramena
   #     unstable = import nixos-unstable { };
   #   }
   class Colmena
+    # @param module_root [String] "Fullpath to the nixos module root (files used by colmena)"
+    # @param tags [String] "List of tags passed to Colemena"
     def initialize(module_root, tags = [], extra_paths = [], options = {})
       @module_root = module_root
       @tags = tags
@@ -121,9 +123,9 @@ module Terramena
       @deployment_file = ''
     end
 
-    def list(terraform_state_path, tags)
+    def list(terraform_state_path)
       terraform = Terramena::Terraform.new(terraform_state_path)
-      nixos_hosts = terraform.nixos_hosts(tags)
+      nixos_hosts = terraform.nixos_hosts(@tags)
       print_hosts(nixos_hosts, false)
     end
 
@@ -159,13 +161,10 @@ module Terramena
 
     def print_hosts(nixos_hosts, use_logger = true)
       lines = [
-        "found #{nixos_hosts.length} host#{'s' if nixos_hosts.length > 1}",
-        'selecting the following hosts:'
+        "Found #{nixos_hosts.length} host#{'s' if nixos_hosts.length > 1}"
       ]
 
-      nixos_hosts.each do |host|
-        lines.push host.to_short_s
-      end
+      nixos_hosts.each { |host| lines.push host.to_short_s }
 
       lines.each do |line|
         if use_logger
@@ -226,7 +225,7 @@ module Terramena
       print_hosts(nixos_hosts)
 
       colmena_filename = File.realpath File.join(@temp_dir, COLEMENA_DEPLOYMENT_FILENAME)
-      channel_filename = File.realpath File.join(@temp_dir, @channel_filename)
+      channel_filename = File.realpath File.join(@temp_dir, File.basename(@channel_filename))
 
       @logger.info 'building colmena deployment file...'
       cmd = <<~NIX_BUILD_CMD
