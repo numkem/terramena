@@ -16,12 +16,10 @@
             buildInputs = with pkgs; [ ruby_3_1 ];
 
             installPhase = ''
-              mkdir -p $out/lib $out/bin
+              mkdir -p $out/lib $out/bin $out/share
               cp bin/* $out/bin/
               cp lib/* $out/lib/
-
-              mkdir -p $out/share
-              cp colmena_deployment.nix $out/share/
+              cp share/* $out/share/
             '';
           };
         };
