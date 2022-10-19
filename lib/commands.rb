@@ -102,7 +102,7 @@ module Commands
         connect_to_host(host)
       end
 
-      warn "cannot find hostname #{hostname} in nixos hosts"
+      warn "cannot find hostname #{@hostname} in nixos hosts"
       exit 1
     end
 
