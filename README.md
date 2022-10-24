@@ -26,12 +26,12 @@ This repository is a flake so you can add it to the current devShell directly.
 {
   inputs.terramena.url = github:numkem/terramena;
   
-  outputs = { self, nixpkgs, terramena, ... }:
-  
-  devShells.x86_64-linux.default = with import nixpkgs { system = "x86_64-linux"; }; pkgs.mkShell {
-    buildInputs = [
-      terramena.packages.x86_64-linux.default
-    ];
+  outputs = { self, nixpkgs, terramena, ... }: {
+    devShells.x86_64-linux.default = with import nixpkgs { system = "x86_64-linux"; }; pkgs.mkShell {
+        buildInputs = [
+        terramena.packages.x86_64-linux.default
+        ];
+    };
   };
 }
 ```
