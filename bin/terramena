@@ -26,15 +26,13 @@ end
 ### Main
 ###
 
-# Parse first argument for a command
-if ARGV.empty?
-  warn "A command is required as first argument, available commands are: #{COMMANDS.keys.join(', ')}"
-  show_commands
-  exit 1
-end
-
 begin
   COMMANDS.fetch(ARGV[0])[:command].new(ARGV).run
+rescue KeyError
+  puts 'No commands specified. Valid commands are:'
+  # No command specified
+  show_commands
+  exit 1
 rescue Slop::MissingRequiredOption => e
   puts e
   exit 1

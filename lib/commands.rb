@@ -11,8 +11,6 @@ module Slop
 end
 
 module Commands
-  VERSION = '0.0.1'
-
   class << self
     attr_accessor :logger
   end
@@ -21,18 +19,29 @@ module Commands
   end
 
   class Command
+    attr_reader :args
+
     # @return [void]
     def initialize(opts, args)
       begin
+        opts.separator ''
+        opts.separator 'common options:'
         opts.bool '--debug', 'print debugging information'
-        parser = Slop::Parser.new(opts)
-        @args = args
+        opts.on '-h', '--help', 'print this help' do
+          puts opts
+          raise ExitError
+        end
+        opts.on '-v', '--version', 'print version' do
+          puts Terramena::VERSION
+          raise ExitError
+        end
 
-        @result = parser.parse(args)
+        parser = Slop::Parser.new(opts)
+        @args = parser.parse(args)
       rescue Slop::MissingRequiredOption => e
         puts e
         puts opts
-        raise Commands::ExitError
+        raise ExitError
       end
 
       @opts = opts
@@ -46,7 +55,7 @@ module Commands
       logger.formatter = proc do |severity, _datetime, _progname, msg|
         "[#{severity}]: #{msg}\n"
       end
-      logger.level = if @result.debug?
+      logger.level = if @args.debug?
                        Logger::DEBUG
                      else
                        Logger::WARN
@@ -69,8 +78,8 @@ module Commands
     end
 
     def run
-      t = Terramena::Colmena.new '', @result[:tags]
-      t.list @result[:state]
+      t = Terramena::Colmena.new '', @args[:tags]
+      t.list @args[:state]
     end
   end
 
@@ -89,10 +98,10 @@ module Commands
     end
 
     def run
-      @result.arguments.shift # removes the command (ssh)
+      @args.arguments.shift # removes the command (ssh)
       parse_arguments
 
-      terramena = Terramena::Terraform.new(@result[:state])
+      terramena = Terramena::Terraform.new(@args[:state])
       nixos_hosts = terramena.nixos_hosts()
 
       # Check if the hostname matches any hosts in the found nixos_hosts
@@ -125,17 +134,17 @@ module Commands
     def ssh_switches
       ssh_switches = []
 
-      ssh_switches += ['-F', @result[:sshconfig]] if !@result[:sshconfig].nil? && (File.exist? @result[:sshconfig])
-      ssh_switches += ['-i', @result[:keyfile]] if !@result[:keyfile].nil? && (File.exist? @result[:keyfile])
-      ssh_switches += ['-v'] if !@result[:verbose].nil? && (@result.key? :verbose)
+      ssh_switches += ['-F', @args[:sshconfig]] if !@args[:sshconfig].nil? && (File.exist? @args[:sshconfig])
+      ssh_switches += ['-i', @args[:keyfile]] if !@args[:keyfile].nil? && (File.exist? @args[:keyfile])
+      ssh_switches += ['-v'] if !@args[:verbose].nil? && (@args.key? :verbose)
       ssh_switches
     end
 
     def parse_arguments
-      raise Slop::MissingRequiredOption, 'a hostname is required as the first argument' if @result.arguments.empty?
+      raise Slop::MissingRequiredOption, 'a hostname is required as the first argument' if @args.arguments.empty?
 
-      @hostname = @result.arguments.shift
-      @username = @result['username']
+      @hostname = @args.arguments.shift
+      @username = @args['username']
       @username, @hostname = @hostname.split('@') if @hostname.include? '@'
       @logger.debug "hostname: '#{@hostname}'"
       @logger.debug "username: '#{@username}'"
@@ -152,7 +161,8 @@ module Commands
                   default: Terramena::DEFAULT_SSH_CONFIG_FILENAME
       opts.string '-m', '--module', 'path to the nixos module root', required: true
       opts.string '-x', '--channel', 'path to the channel file to use', default: Terramena::DEFAULT_CHANNEL_FILENAME
-      opts.array '-p', '--paths', 'list of extra paths to copy to the module_root (seperated by a comma)'
+      opts.array '-p', '--paths', 'list of extra paths to copy to the module_root (seperated by a comma)',
+                 delimiter: ','
       opts.bool '--no-substitutes', 'do not use subsitution (nixos binary caches) when pushing the new configuration'
       opts.bool '--show-trace', 'show trace during nix builds'
 
@@ -161,7 +171,7 @@ module Commands
 
     def run
       set_options
-      @logger.debug(@result.to_hash)
+      @logger.debug(@args.to_hash)
 
       begin
         colmena = Terramena::Colmena.new(@module_path, @tags, @extra_paths,
@@ -178,37 +188,37 @@ module Commands
 
     def set_options
       # Check if the current path contains a file named ssh_config
-      if File.exist? @result[:sshconfig]
+      if File.exist? @args[:sshconfig]
         # If it does, use it
-        @ssh_config = File.realpath @result[:sshconfig]
+        @ssh_config = File.realpath @args[:sshconfig]
       else
         @ssh_config = ''
         warn 'warning: no ssh_config file provided'
       end
 
       # Channel file is required, if it's not found we error out
-      if File.exist? @result[:channel]
-        @channel_filename = File.realpath @result[:channel]
+      if File.exist? @args[:channel]
+        @channel_filename = File.realpath @args[:channel]
       else
-        raise Slop::MissingRequiredOption, "invalid channel file #{@result[:channel]} provided"
+        raise Slop::MissingRequiredOption, "invalid channel file #{@args[:channel]} provided"
       end
 
       # Make sure the module folder given exists
-      unless File.directory? @result[:module]
-        raise Slop::MissingRequiredOption, "invalid nixos root module directory, #{@result[:module]} provided"
+      unless File.directory? @args[:module]
+        raise Slop::MissingRequiredOption, "invalid nixos root module directory, #{@args[:module]} provided"
       end
 
       # The terraform state needs to be an existing file
-      unless File.exist? @result[:state]
-        raise Slop::MissingRequiredOption, "invalid terrform state file, #{@result[:state]} provided"
+      unless File.exist? @args[:state]
+        raise Slop::MissingRequiredOption, "invalid terrform state file, #{@args[:state]} provided"
       end
 
-      @module_path = File.realdirpath @result[:module]
-      @tags = @result[:tags]
-      @extra_paths = @result[:paths]
-      @state = @result[:state]
-      @show_trace = @result.show_trace?
-      @no_substitutes = @result.no_substitutes?
+      @module_path = File.realdirpath @args[:module]
+      @tags = @args[:tags]
+      @extra_paths = @args[:paths]
+      @state = @args[:state]
+      @show_trace = @args['show-trace']
+      @no_substitutes = @args['no-substitutes']
     end
   end
 end
