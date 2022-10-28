@@ -8,7 +8,7 @@
       let
         pkgs = nixpkgs.legacyPackages.${system};
 
-        rubyWithGems = pkgs.ruby_3_1.withPackages (ps: with ps; [ slop solargraph ]);
+        rubyWithGems = pkgs.ruby_3_1.withPackages (ps: with ps; [ slop solargraph rspec rake ]);
       in
       {
         packages = flake-utils.lib.flattenTree {
