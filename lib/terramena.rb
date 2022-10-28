@@ -7,6 +7,8 @@ require 'json'
 require 'tmpdir'
 
 module Terramena
+  VERSION = '0.1.0'
+
   class << self
     attr_accessor :logger
   end
@@ -142,21 +144,23 @@ module Terramena
     private
 
     def run_colmena(goal = 'apply', show_trace = false, no_substitutes = false)
-      colmena_cmd = <<~COLMENA_CMD
-        colmena #{goal}#{' --no-substitutes' if no_substitutes} \
-                -f #{@deployment_file}#{tags_for_colmena_command}#{' --show-trace' if show_trace}
-      COLMENA_CMD
-
       @logger.debug "colmena env: #{colmena_env}"
       @logger.debug "colmena command: #{colmena_cmd}"
 
-      pid = spawn(colmena_env, colmena_cmd)
+      pid = spawn(colmena_env, colmena_command(goal, show_trace:, no_substitutes:))
 
       Signal.trap('TERM', pid) do
         Process.kill('TERM', pid)
       end
 
       Process.wait
+    end
+
+    def colmena_command(goal, show_trace = false, no_substitutes = false)
+      colmena_cmd = <<~COLMENA_CMD
+        colmena #{goal}#{' --no-substitutes' if no_substitutes} \
+                -f #{@deployment_file}#{tags_for_colmena_command}#{' --show-trace' if show_trace}
+      COLMENA_CMD
     end
 
     def print_hosts(nixos_hosts, use_logger = true)
