@@ -8,14 +8,19 @@
       let
         pkgs = nixpkgs.legacyPackages.${system};
 
-        rubyWithGems = pkgs.ruby_3_1.withPackages (ps: with ps; [ slop solargraph rspec rake ]);
-      in
-      {
+        devPackages = [
+          pkgs.rubyPackages_3_1.solargraph
+          pkgs.rubyPackages_3_1.rspec
+          pkgs.rubyPackages_3_1.rake
+        ];
+
+        rubyWithGems = pkgs.ruby_3_1.withPackages (ps: with ps; [ slop ]);
+      in {
         packages = flake-utils.lib.flattenTree {
           default = pkgs.stdenv.mkDerivation {
             name = "terramena";
             src = self;
-            buildInputs = with pkgs; [ rubyWithGems ];
+            buildInputs = [ rubyWithGems ];
 
             installPhase = ''
               mkdir -p $out/lib $out/bin $out/share
@@ -26,10 +31,7 @@
           };
         };
 
-        devShells.default = pkgs.mkShell {
-          buildInputs = with pkgs; [
-            rubyWithGems
-          ];
-        };
+        devShells.default =
+          pkgs.mkShell { buildInputs = [ rubyWithGems ] ++ devPackages; };
       });
 }
