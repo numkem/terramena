@@ -129,7 +129,7 @@ module Terramena
     def list(terraform_state_path)
       terraform = Terramena::Terraform.new(terraform_state_path)
       nixos_hosts = terraform.nixos_hosts(@tags)
-      print_hosts(nixos_hosts, false)
+      print_hosts(nixos_hosts, use_logger: false)
     end
 
     def deploy(goal = 'apply', show_trace: false, no_substitutes: false)
