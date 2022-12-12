@@ -144,10 +144,11 @@ module Terramena
     private
 
     def run_colmena(goal = 'apply', show_trace = false, no_substitutes = false)
+      cmd = colmena_command(goal, show_trace:, no_substitutes:)
       @logger.debug "colmena env: #{colmena_env}"
-      @logger.debug "colmena command: #{colmena_cmd}"
+      @logger.debug "colmena command: #{cmd}"
 
-      pid = spawn(colmena_env, colmena_command(goal, show_trace:, no_substitutes:))
+      pid = spawn(colmena_env, cmd)
 
       Signal.trap('TERM', pid) do
         Process.kill('TERM', pid)
