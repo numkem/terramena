@@ -1,6 +1,7 @@
 # lib/terramena.rb
 # frozen_string_literal: true
 
+require 'English'
 require 'fileutils'
 require 'find'
 require 'json'
@@ -134,7 +135,7 @@ module Terramena
     def deploy(goal = 'apply', show_trace: false, no_substitutes: false)
       build_module_root_dir
       colemana_deployment_file
-      run_colmena(goal, show_trace, no_substitutes)
+      run_colmena(goal, show_trace:, no_substitutes:)
     end
 
     def cleanup
@@ -143,7 +144,7 @@ module Terramena
 
     private
 
-    def run_colmena(goal = 'apply', show_trace = false, no_substitutes = false)
+    def run_colmena(goal = 'apply', show_trace: false, no_substitutes: false)
       cmd = colmena_command(goal, show_trace:, no_substitutes:)
       @logger.debug "colmena env: #{colmena_env}"
       @logger.debug "colmena command: #{cmd}"
@@ -157,14 +158,14 @@ module Terramena
       Process.wait
     end
 
-    def colmena_command(goal, show_trace = false, no_substitutes = false)
-      colmena_cmd = <<~COLMENA_CMD
+    def colmena_command(goal, show_trace: false, no_substitutes: false)
+      <<~COLMENA_CMD
         colmena #{goal}#{' --no-substitutes' if no_substitutes} \
                 -f #{@deployment_file}#{tags_for_colmena_command}#{' --show-trace' if show_trace}
       COLMENA_CMD
     end
 
-    def print_hosts(nixos_hosts, use_logger = true)
+    def print_hosts(nixos_hosts, use_logger: true)
       lines = [
         "Found #{nixos_hosts.length} host#{'s' if nixos_hosts.length > 1}"
       ]
