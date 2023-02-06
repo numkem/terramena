@@ -279,7 +279,7 @@ module Terramena
       # Go through all the terraform outputs and add their values together
       begin
         terraform_values = []
-        JSON.parse(File.read(@state_filename))['output'].each do |_key, output_name|
+        JSON.parse(File.read(@state_filename))['outputs'].each do |_key, output_name|
           output_name.each { |k, v| terraform_values.append v if k == 'value' }
         end
       rescue StandardError => e
