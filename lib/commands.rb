@@ -72,14 +72,14 @@ module Commands
       opts = Slop::Options.new
       opts.array '-t', '--tags', 'tags to deploy with colmena (seperated by a comma)'
       opts.string '-s', '--state', 'fullpath to the terraform state file',
-                  default: Terramena::DEFAULT_TERRAFORM_STATE_PATH
+                  default: Terramena::DEFAULT_TERRAFORM_STATE_FILE
 
       super(opts, args)
     end
 
     def run
       t = Terramena::Colmena.new '', @args[:tags]
-      t.list @args[:state]
+      t.list
     end
   end
 
@@ -89,7 +89,7 @@ module Commands
       opts.string '-u', '--user', 'username to use for SSH, can be used also through username@host'
       opts.string '-i', '--keyfile', 'key file to use during connection'
       opts.string '-s', '--state', 'fullpath to the terraform state file',
-                  default: Terramena::DEFAULT_TERRAFORM_STATE_PATH
+                  default: Terramena::DEFAULT_TERRAFORM_STATE_FILE
       opts.string '-c', '--sshconfig', 'fullpath to the ssh_config file',
                   default: Terramena::DEFAULT_SSH_CONFIG_FILENAME
       opts.bool '-v', '--verbose', 'make ssh talk more'
@@ -156,7 +156,7 @@ module Commands
       opts = Slop::Options.new
       opts.array '-t', '--tags', 'tags to deploy with colmena (seperated by a comma)'
       opts.string '-s', '--state', 'fullpath to the terraform state file',
-                  default: Terramena::DEFAULT_TERRAFORM_STATE_PATH
+                  default: Terramena::DEFAULT_TERRAFORM_STATE_FILE
       opts.string '-c', '--sshconfig', 'fullpath to the ssh_config file',
                   default: Terramena::DEFAULT_SSH_CONFIG_FILENAME
       opts.string '-m', '--module', 'path to the nixos module root', required: true
@@ -171,14 +171,14 @@ module Commands
 
     def run
       set_options
-      @logger.debug(@args.to_hash)
+      @logger.debug "options passed: #{@args.to_hash}"
 
       begin
-        colmena = Terramena::Colmena.new(@module_path, @tags, @extra_paths,
-                                         options = { terraform_state_path: @terraform_state,
-                                                     ssh_config: @ssh_config,
-                                                     channel_filename: @channel_filename })
-        colmena.deploy('apply', show_trace: @show_trace, no_substitutes: @no_substitutes)
+        colmena = Terramena::Colmena.new(@args[:module], @args[:tags], @args[:paths],
+                                         options = { terraform_state_file: @args[:state],
+                                                     ssh_config: @args[:sshconfig],
+                                                     channel_filename: @args[:channel] })
+        colmena.deploy('apply', show_trace: @args[:show_trace], no_substitutes: @args[:no_substitutes])
       ensure
         colmena.cleanup
       end

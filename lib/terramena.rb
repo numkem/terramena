@@ -83,7 +83,7 @@ module Terramena
   #   channel_filename: A nix channel file
   #   host_dir: The name of the folder that contains all the hosts definitions
   #   ssh_config: Path to an ssh_config file
-  #   terraform_state_path: Path to a terraform.tfstate file
+  #   terraform_state_file: Path to a terraform.tfstate file
   #
   #   Here is an example of a channel file: TODO: Finish example file
   #   let
@@ -115,8 +115,8 @@ module Terramena
       options[:channel_filename] = DEFAULT_CHANNEL_FILENAME if options[:channel_filename].nil?
       @channel_filename = options[:channel_filename]
 
-      options[:terraform_state_path] = DEFAULT_TERRAFORM_STATE_PATH if options[:terraform_state_path].nil?
-      @terraform_state_file = options[:terraform_state_path]
+      options[:terraform_state_file] = DEFAULT_TERRAFORM_STATE_FILE if options[:terraform_state_file].nil?
+      @terraform_state_file = options[:terraform_state_file]
 
       options[:host_dir] = DEFAULT_HOST_DIRNAME if options[:host_dir].nil?
       @host_dir = options[:host_dir]
@@ -126,8 +126,8 @@ module Terramena
       @deployment_file = ''
     end
 
-    def list(terraform_state_path)
-      terraform = Terramena::Terraform.new(terraform_state_path)
+    def list
+      terraform = Terramena::Terraform.new(@terraform_state_file)
       nixos_hosts = terraform.nixos_hosts(@tags)
       print_hosts(nixos_hosts, use_logger: false)
     end
@@ -226,7 +226,8 @@ module Terramena
     end
 
     def colemana_deployment_file
-      terramena = Terramena::Terraform.new(@terraform_state_path)
+      @logger.debug "using Terraform state file #{@terraform_state_file}"
+      terramena = Terramena::Terraform.new(@terraform_state_file)
       nixos_hosts = terramena.nixos_hosts(@tags)
       print_hosts(nixos_hosts)
 
@@ -266,22 +267,20 @@ module Terramena
     end
   end
 
-  DEFAULT_TERRAFORM_STATE_PATH = './terraform.tfstate'
+  DEFAULT_TERRAFORM_STATE_FILE = './terraform.tfstate'
   # Handles working with terraform output to find different values
   class Terraform
+    # check we have a state file
     def initialize(state_filename)
+      logger.fatal "State file '#{state_filename}' does not exists" unless File.exist? state_filename
       @state_filename = state_filename
     end
 
     # Returns a list of NixOS hosts gathered from Terraform's output
     # TODO: refactor to reduce complexity
     def nixos_hosts(tags = [])
-      # Go through all the terraform outputs and add their values together
       begin
-        terraform_values = []
-        JSON.parse(File.read(@state_filename))['outputs'].each do |_key, output_name|
-          output_name.each { |k, v| terraform_values.append v if k == 'value' }
-        end
+        terraform_values = JSON.parse(File.read(@state_filename))['outputs']
       rescue StandardError => e
         warn "failed to read state file #{@state_filename}: #{e}"
         exit 1
