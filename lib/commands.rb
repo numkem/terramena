@@ -31,7 +31,7 @@ module Commands
           puts opts
           raise ExitError
         end
-        opts.on '-v', '--version', 'print version' do
+        opts.on '-V', '--version', 'print version' do
           puts Terramena::VERSION
           raise ExitError
         end
