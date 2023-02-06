@@ -197,8 +197,8 @@ module Terramena
       path = "#{__dir__}/"
       depth.times { |_i| path += '../' }
 
-      Find.find(path) do |path|
-        path if File.basename == COLEMENA_DEPLOYMENT_FILENAME
+      Find.find(path) do |p|
+        p if File.basename == COLEMENA_DEPLOYMENT_FILENAME
       end
 
       raise StandardError("colmena deployment file named #{COLMENA_DEPLOYMENT_FILENAME} not found")
@@ -277,9 +277,14 @@ module Terramena
     # TODO: refactor to reduce complexity
     def nixos_hosts(tags = [])
       # Go through all the terraform outputs and add their values together
-      terraform_values = []
-      JSON.parse(`terraform output -state=#{@state_filename} -json`).each do |_key, output_name|
-        output_name.each { |k, v| terraform_values.append v if k == 'value' }
+      begin
+        terraform_values = []
+        JSON.parse(File.read(@state_filename))['output'].each do |_key, output_name|
+          output_name.each { |k, v| terraform_values.append v if k == 'value' }
+        end
+      rescue StandardError => e
+        warn "failed to read state file #{@state_filename}: #{e}"
+        exit 1
       end
 
       hash_hosts = find_nixos_hosts(terraform_values)
