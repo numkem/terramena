@@ -1,6 +1,0 @@
-projectKey=numkem_terramena_AYY4P87j8f_oyHBbVREL
-serverUrl=https://sonarqube.numkem.org
-serverVersion=9.9.0.65466
-dashboardUrl=https://sonarqube.numkem.org/dashboard?id=numkem_terramena_AYY4P87j8f_oyHBbVREL
-ceTaskId=AYZhkTCkx-vwFCtCE9bt
-ceTaskUrl=https://sonarqube.numkem.org/api/ce/task?id=AYZhkTCkx-vwFCtCE9bt
