@@ -275,32 +275,35 @@ module Terramena
     end
 
     # Returns a list of NixOS hosts gathered from Terraform's output
-    # TODO: refactor to reduce complexity
     def nixos_hosts(tags = [])
       begin
         terraform_values = JSON.parse(File.read(@state_filename))['outputs']
       rescue StandardError => e
-        warn "failed to read state file #{@state_filename}: #{e}"
-        exit 1
+        raise "failed to read state file #{@state_filename}: #{e}"
       end
 
       hash_hosts = find_nixos_hosts(terraform_values)
       unless tags.empty?
-        hash_hosts = hash_hosts.select do |host|
-          has_tag = false
-
-          tags.each do |tag|
-            has_tag = true if host['tags'].include? tag
-          end
-
-          has_tag
-        end
+        # Only pick the hosts that have the right tags
+        hash_hosts = filter_hosts_by_tag(hash_host, tags)
       end
 
       hash_hosts.map { |h| NixosHost.new(h) }
     end
 
     private
+
+    def filter_hosts_by_tag(hash_hosts, tags = [])
+      hash_hosts = hash_hosts.select do |host|
+        has_tag = false
+
+        tags.each do |tag|
+          has_tag = true if host['tags'].include? tag
+        end
+
+        has_tag
+      end
+    end
 
     # Go through the terraform output and find hashes that have a key-value pair of
     # '_type' => 'nixos_host'
