@@ -270,9 +270,7 @@ module Terramena
   DEFAULT_TERRAFORM_STATE_FILE = './terraform.tfstate'
   # Handles working with terraform output to find different values
   class Terraform
-    # check we have a state file
     def initialize(state_filename)
-      logger.fatal "State file '#{state_filename}' does not exists" unless File.exist? state_filename
       @state_filename = state_filename
     end
 
