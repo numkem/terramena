@@ -197,11 +197,12 @@ module Commands
       end
 
       # Channel file is required, if it's not found we error out
-      if File.exist? @args[:channel]
-        @channel_filename = File.realpath @args[:channel]
-      else
-        raise Slop::MissingRequiredOption, "invalid channel file #{@args[:channel]} provided"
+      unless File.exist? @args[:channel]
+        raise Slop::MissingRequiredOption,
+              "invalid channel file #{@args[:channel]} provided"
       end
+
+      @channel_filename = File.realpath @args[:channel]
 
       # Make sure the module folder given exists
       unless File.directory? @args[:module]
