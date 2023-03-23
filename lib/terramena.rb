@@ -285,7 +285,7 @@ module Terramena
       hash_hosts = find_nixos_hosts(terraform_values)
       unless tags.empty?
         # Only pick the hosts that have the right tags
-        hash_hosts = filter_hosts_by_tag(hash_host, tags)
+        hash_hosts = filter_hosts_by_tag(hash_hosts, tags)
       end
 
       hash_hosts.map { |h| NixosHost.new(h) }
