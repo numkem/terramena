@@ -165,6 +165,7 @@ module Commands
                  delimiter: ','
       opts.bool '--no-substitutes', 'do not use subsitution (nixos binary caches) when pushing the new configuration'
       opts.bool '--show-trace', 'show trace during nix builds'
+      opts.bool '--keep', 'do not cleanup the temporary files'
 
       super(opts, args)
     end
@@ -180,7 +181,7 @@ module Commands
                                                      channel_filename: @args[:channel] })
         colmena.deploy('apply', show_trace: @args[:show_trace], no_substitutes: @args[:no_substitutes])
       ensure
-        colmena.cleanup
+        colmena.cleanup unless @args[:keep]
       end
     end
 
