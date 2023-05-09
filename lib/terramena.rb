@@ -121,9 +121,11 @@ module Terramena
       options[:host_dir] = DEFAULT_HOST_DIRNAME if options[:host_dir].nil?
       @host_dir = options[:host_dir]
 
+      options[:deployment_file] = DEFAULT_COLMENA_DEPLOYMENT_FILEPATH if options[:deployment_file].nil?
+      @deployment_file = options[:deployment_file]
+
       # modified during runtime
       @temp_dir = ''
-      @deployment_file = ''
     end
 
     def list
@@ -182,8 +184,10 @@ module Terramena
     end
 
     def build_colmena_deployment_filepath(depth = COLEMENA_FILE_SEARCH_DEPTH)
-      f = File.realpath(DEFAULT_COLMENA_DEPLOYMENT_FILEPATH)
+      f = File.realpath @deployment_file
       if File.exist? f
+        @logger.debug "using colmena deployment file #{@deployment_file}"
+
         f
       else
         @logger.debug 'colmena deployment file not found in standard location, trying to find it...'

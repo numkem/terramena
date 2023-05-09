@@ -163,6 +163,7 @@ module Commands
       opts.string '-x', '--channel', 'path to the channel file to use', default: Terramena::DEFAULT_CHANNEL_FILENAME
       opts.array '-p', '--paths', 'list of extra paths to copy to the module_root (seperated by a comma)',
                  delimiter: ','
+      opts.string '-d', '--deployment', 'path to colmena deployment file'
       opts.bool '--no-substitutes', 'do not use subsitution (nixos binary caches) when pushing the new configuration'
       opts.bool '--show-trace', 'show trace during nix builds'
       opts.bool '--keep', 'do not cleanup the temporary files'
@@ -176,9 +177,10 @@ module Commands
 
       begin
         colmena = Terramena::Colmena.new(@args[:module], @args[:tags], @args[:paths],
-                                         options = { terraform_state_file: @args[:state],
-                                                     ssh_config: @args[:sshconfig],
-                                                     channel_filename: @args[:channel] })
+                                         { terraform_state_file: @args[:state],
+                                           ssh_config: @args[:sshconfig],
+                                           channel_filename: @args[:channel],
+                                           deployment_file: @args[:deployment] })
         colmena.deploy('apply', show_trace: @args[:show_trace], no_substitutes: @args[:no_substitutes])
       ensure
         colmena.cleanup unless @args[:keep]
