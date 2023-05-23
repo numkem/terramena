@@ -30,7 +30,7 @@ let
 in
 pkgs.writeText "${deployment_name}_deployment.nix" ''
   let
-    inherit (import "${moduleFiles}/channels.nix") pkgs unstable;
+    inherit (import "${channelsFile}") pkgs unstable;
     lib = pkgs.lib;
 
     hostConfig = host: lib.setAttrByPath [ host.hostname ] (import ("${moduleFiles}/" + host.configuration) {
