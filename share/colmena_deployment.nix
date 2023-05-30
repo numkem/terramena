@@ -3,7 +3,7 @@
 let
   inherit (import channels) pkgs;
 
-  channelsFile = pkgs.writeText "channels.nix" (builtins.readFile channels);
+  channelFileContent = builtins.readFile channels;
 
   deployment_name = "terramena";
 
@@ -19,8 +19,10 @@ let
     installPhase = ''
       mkdir -p $out
 
-      cp ${channelsFile} $out/
       cp -r $src/* $out/
+      rm -vf $out/channels.nix
+
+      echo "${channelFileContent}" > $out/channels.nix
     '';
   };
 
@@ -30,7 +32,7 @@ let
 in
 pkgs.writeText "${deployment_name}_deployment.nix" ''
   let
-    inherit (import "${channelsFile}") pkgs unstable;
+    inherit (import "${moduleFiles}/channels.nix") pkgs unstable;
     lib = pkgs.lib;
 
     hostConfig = host: lib.setAttrByPath [ host.hostname ] (import ("${moduleFiles}/" + host.configuration) {
