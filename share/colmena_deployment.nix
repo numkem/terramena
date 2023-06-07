@@ -22,7 +22,9 @@ let
       cp -r $src/* $out/
       rm -vf $out/channels.nix
 
-      echo "${channelFileContent}" > $out/channels.nix
+      cat >$out/channels.nix <<EOF
+      ${channelFileContent}
+      EOF
     '';
   };
 
